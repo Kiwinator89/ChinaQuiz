@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🇨🇳 China Quiz</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&family=Ma+Shan+Zheng&family=Cinzel:wght@700;900&display=swap');
+
+  :root {
+    --red: #DE2910;
+    --dark-red: #9B1A0A;
+    --gold: #FFDE00;
+    --dark-gold: #C8A800;
+    --black: #0D0D0D;
+    --paper: #FDF6E3;
+    --ink: #1A0A00;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--black);
+    font-family: 'Noto Serif SC', serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* ── Animated background ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 40%, rgba(222,41,16,.18) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 80% at 80% 70%, rgba(255,222,0,.10) 0%, transparent 60%),
+      repeating-linear-gradient(45deg, transparent, transparent 60px, rgba(255,222,0,.03) 60px, rgba(255,222,0,.03) 61px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Floating lanterns */
+  .lantern {
+    position: fixed;
+    font-size: 2.5rem;
+    animation: floatLantern linear infinite;
+    opacity: .55;
+    pointer-events: none;
+    z-index: 0;
+  }
+  @keyframes floatLantern {
+    0%   { transform: translateY(110vh) rotate(-8deg); opacity: 0; }
+    10%  { opacity: .55; }
+    90%  { opacity: .55; }
+    100% { transform: translateY(-10vh) rotate(8deg);  opacity: 0; }
+  }
+
+  /* ── SCREEN BASE ── */
+  .screen {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+  .screen.active { display: flex; }
+
+  /* ── START SCREEN ── */
+  #startScreen {
+    background: linear-gradient(160deg, #1a0000 0%, #3d0000 40%, #0d0d0d 100%);
+    text-align: center;
+  }
+
+  .flag-bar {
+    width: 100%;
+    height: 6px;
+    background: linear-gradient(90deg, var(--red) 60%, var(--gold) 60%);
+    position: fixed;
+    top: 0; left: 0;
+  }
+
+  .big-flag {
+    font-size: clamp(5rem, 18vw, 11rem);
+    margin-bottom: 0.5rem;
+    filter: drop-shadow(0 0 40px rgba(222,41,16,.7));
+    animation: pulse 3s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,100% { transform: scale(1); filter: drop-shadow(0 0 40px rgba(222,41,16,.7)); }
+    50%      { transform: scale(1.05); filter: drop-shadow(0 0 60px rgba(255,222,0,.9)); }
+  }
+
+  .title-zh {
+    font-family: 'Ma Shan Zheng', cursive;
+    font-size: clamp(3rem, 10vw, 6.5rem);
+    color: var(--gold);
+    text-shadow: 0 0 30px rgba(255,222,0,.6), 2px 4px 0 var(--dark-red);
+    letter-spacing: .1em;
+    line-height: 1;
+  }
+  .title-nl {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(1.1rem, 4vw, 2rem);
+    color: var(--red);
+    letter-spacing: .3em;
+    text-transform: uppercase;
+    margin: .4rem 0 2rem;
+    text-shadow: 0 0 15px rgba(222,41,16,.5);
+  }
+  .subtitle {
+    color: rgba(255,222,0,.7);
+    font-size: clamp(.9rem, 2.5vw, 1.15rem);
+    margin-bottom: 2.5rem;
+    max-width: 520px;
+    line-height: 1.7;
+  }
+
+  .btn-start {
+    background: linear-gradient(135deg, var(--gold) 0%, var(--dark-gold) 100%);
+    color: var(--dark-red);
+    border: none;
+    padding: 1.1rem 3.5rem;
+    font-family: 'Cinzel', serif;
+    font-size: 1.3rem;
+    font-weight: 900;
+    letter-spacing: .2em;
+    border-radius: 4px;
+    cursor: pointer;
+    text-transform: uppercase;
+    box-shadow: 0 0 30px rgba(255,222,0,.4), inset 0 1px 0 rgba(255,255,255,.3);
+    transition: all .25s;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-start::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,.25) 0%, transparent 60%);
+  }
+  .btn-start:hover {
+    transform: translateY(-3px) scale(1.04);
+    box-shadow: 0 0 50px rgba(255,222,0,.7), inset 0 1px 0 rgba(255,255,255,.3);
+  }
+  .btn-start:active { transform: scale(.97); }
+
+  .stars-row {
+    color: var(--gold);
+    font-size: 2rem;
+    letter-spacing: .5rem;
+    margin-bottom: 1.5rem;
+    animation: starSpin 8s linear infinite;
+  }
+  @keyframes starSpin {
+    0%   { letter-spacing: .5rem; }
+    50%  { letter-spacing: 1.2rem; }
+    100% { letter-spacing: .5rem; }
+  }
+
+  /* ── QUIZ SCREEN ── */
+  #quizScreen {
+    background: linear-gradient(160deg, #100000 0%, #2a0000 50%, #0d0d0d 100%);
+    justify-content: flex-start;
+    padding-top: 5rem;
+  }
+
+  .progress-bar-wrap {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 5px;
+    background: rgba(255,255,255,.1);
+    z-index: 100;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--red), var(--gold));
+    transition: width .5s ease;
+    box-shadow: 0 0 10px var(--gold);
+  }
+
+  .question-counter {
+    font-family: 'Cinzel', serif;
+    color: var(--gold);
+    font-size: .9rem;
+    letter-spacing: .2em;
+    margin-bottom: 1rem;
+    opacity: .8;
+    text-align: center;
+  }
+
+  .category-badge {
+    background: rgba(222,41,16,.25);
+    border: 1px solid rgba(222,41,16,.5);
+    color: var(--red);
+    font-size: .75rem;
+    letter-spacing: .15em;
+    padding: .3rem .9rem;
+    border-radius: 20px;
+    margin-bottom: 1.5rem;
+    text-transform: uppercase;
+    font-family: 'Cinzel', serif;
+  }
+
+  .question-card {
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,222,0,.15);
+    border-radius: 12px;
+    padding: 2rem 2.5rem;
+    max-width: 720px;
+    width: 100%;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 40px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,222,0,.08);
+  }
+
+  .question-text {
+    color: var(--paper);
+    font-size: clamp(1.05rem, 3vw, 1.35rem);
+    line-height: 1.65;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    max-width: 720px;
+    width: 100%;
+  }
+  @media (max-width: 560px) { .options-grid { grid-template-columns: 1fr; } }
+
+  .option-btn {
+    background: rgba(255,255,255,.05);
+    border: 1.5px solid rgba(255,222,0,.2);
+    color: var(--paper);
+    padding: 1rem 1.2rem;
+    border-radius: 8px;
+    font-family: 'Noto Serif SC', serif;
+    font-size: .95rem;
+    cursor: pointer;
+    text-align: left;
+    line-height: 1.5;
+    transition: all .2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .option-btn::before {
+    content: attr(data-letter);
+    display: inline-block;
+    background: rgba(255,222,0,.15);
+    color: var(--gold);
+    font-family: 'Cinzel', serif;
+    font-weight: 900;
+    font-size: .8rem;
+    width: 1.6rem;
+    height: 1.6rem;
+    line-height: 1.6rem;
+    text-align: center;
+    border-radius: 4px;
+    margin-right: .6rem;
+    flex-shrink: 0;
+  }
+  .option-btn:hover:not(:disabled) {
+    background: rgba(255,222,0,.1);
+    border-color: var(--gold);
+    transform: translateX(4px);
+    box-shadow: 0 0 20px rgba(255,222,0,.15);
+  }
+  .option-btn.correct {
+    background: rgba(0,200,80,.2);
+    border-color: #00c850;
+    color: #7fffc4;
+    pointer-events: none;
+  }
+  .option-btn.wrong {
+    background: rgba(222,41,16,.25);
+    border-color: var(--red);
+    color: #ff8080;
+    pointer-events: none;
+  }
+  .option-btn:disabled { cursor: default; }
+
+  /* ── FEEDBACK OVERLAY ── */
+  .feedback-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .3s;
+  }
+  .feedback-overlay.show { opacity: 1; pointer-events: all; }
+  .feedback-overlay.correct-bg { background: rgba(0,30,10,.85); }
+  .feedback-overlay.wrong-bg   { background: rgba(30,0,0,.85); }
+
+  .feedback-img {
+    max-width: min(340px, 80vw);
+    max-height: 55vh;
+    object-fit: contain;
+    border-radius: 12px;
+    box-shadow: 0 0 60px rgba(255,222,0,.3);
+    animation: popIn .4s cubic-bezier(.17,.67,.4,1.3);
+  }
+  @keyframes popIn {
+    from { transform: scale(.5) rotate(-10deg); opacity: 0; }
+    to   { transform: scale(1) rotate(0);       opacity: 1; }
+  }
+  .feedback-text {
+    font-family: 'Cinzel', serif;
+    font-size: 2rem;
+    font-weight: 900;
+    margin-top: 1rem;
+    text-shadow: 0 0 30px currentColor;
+  }
+  .feedback-text.ok   { color: #00e87a; }
+  .feedback-text.nope { color: var(--red); }
+
+  /* ── END SCREEN ── */
+  #endScreen {
+    background: linear-gradient(160deg, #0a0a00 0%, #2a1a00 50%, #0d0d0d 100%);
+    text-align: center;
+  }
+
+  .end-score {
+    font-family: 'Ma Shan Zheng', cursive;
+    font-size: clamp(5rem, 20vw, 10rem);
+    color: var(--gold);
+    text-shadow: 0 0 40px rgba(255,222,0,.7), 3px 5px 0 var(--dark-red);
+    line-height: 1;
+    margin-bottom: .5rem;
+  }
+  .end-label {
+    font-family: 'Cinzel', serif;
+    color: var(--red);
+    letter-spacing: .25em;
+    font-size: 1rem;
+    text-transform: uppercase;
+    margin-bottom: 2rem;
+  }
+  .end-message {
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,222,0,.2);
+    border-radius: 12px;
+    padding: 1.5rem 2rem;
+    max-width: 560px;
+    color: var(--paper);
+    font-size: clamp(1rem, 3vw, 1.25rem);
+    line-height: 1.7;
+    margin-bottom: 2.5rem;
+    font-style: italic;
+  }
+  .btn-restart {
+    background: transparent;
+    border: 2px solid var(--gold);
+    color: var(--gold);
+    padding: .9rem 2.8rem;
+    font-family: 'Cinzel', serif;
+    font-size: 1rem;
+    letter-spacing: .2em;
+    border-radius: 4px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all .25s;
+  }
+  .btn-restart:hover {
+    background: var(--gold);
+    color: var(--dark-red);
+    box-shadow: 0 0 30px rgba(255,222,0,.4);
+  }
+
+  /* Confetti-like stars on end screen */
+  .end-stars {
+    color: var(--gold);
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    letter-spacing: .4rem;
+  }
+</style>
+</head>
+<body>
+
+<!-- Floating lanterns (created by JS) -->
+
+<!-- ════════════════════════════════════
+     START SCREEN
+════════════════════════════════════ -->
+<div id="startScreen" class="screen active">
+  <div class="flag-bar"></div>
+
+  <div class="big-flag">🇨🇳</div>
+  <div class="title-zh">中国知识问答</div>
+  <div class="title-nl">China Quiz</div>
+  <div class="stars-row">★ ★ ★ ★ ★</div>
+  <p class="subtitle">
+    15 vragen over demografie, politiek, cultuur, economie, import &amp; export.<br>
+    Bewijs dat jouw social credit score het waard is! 🐉
+  </p>
+  <button class="btn-start" onclick="startQuiz()">▶ Start de Quiz</button>
+</div>
+
+<!-- ════════════════════════════════════
+     QUIZ SCREEN
+════════════════════════════════════ -->
+<div id="quizScreen" class="screen">
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
+  </div>
+
+  <div class="question-counter" id="qCounter">Vraag 1 / 15</div>
+  <div class="category-badge" id="qCategory">Categorie</div>
+
+  <div class="question-card">
+    <div class="question-text" id="questionText">…</div>
+  </div>
+
+  <div class="options-grid" id="optionsGrid"></div>
+</div>
+
+<!-- ════════════════════════════════════
+     FEEDBACK OVERLAY
+════════════════════════════════════ -->
+<div class="feedback-overlay" id="feedbackOverlay">
+  <img id="feedbackImg" class="feedback-img" src="" alt="">
+  <div id="feedbackText" class="feedback-text"></div>
+</div>
+
+<!-- ════════════════════════════════════
+     END SCREEN
+════════════════════════════════════ -->
+<div id="endScreen" class="screen">
+  <div class="flag-bar"></div>
+  <div class="end-stars" id="endStars">★ ★ ★ ★ ★</div>
+  <div class="end-score" id="endScore">0</div>
+  <div class="end-label">van de 15 goed</div>
+  <div class="end-message" id="endMessage"></div>
+  <button class="btn-restart" onclick="restartQuiz()">↺ Opnieuw spelen</button>
+</div>
+
+<!-- ════════════════════════════════════
+     AUDIO
+════════════════════════════════════ -->
+<audio id="audioBg"    src="Audio Song.mp3" loop></audio>
+<audio id="audioRight" src="Audio/Right.mp3"></audio>
+<audio id="audioWrong" src="Audio/Wrong.mp3"></audio>
+
+<script>
+/* ── DATA ────────────────────────────────────────────────────── */
+const questions = [
+  {
+    cat: "Demografie",
+    q: "Wat is de bevolking van China (circa 2024)?",
+    options: ["0,9 miljard", "1,4 miljard", "1,8 miljard", "2,2 miljard"],
+    correct: 1
+  },
+  {
+    cat: "Demografie",
+    q: "Hoe lang duurde China's beruchte eenkindpolitiek?",
+    options: ["1960 – 1985", "1979 – 2015", "1990 – 2010", "1970 – 2000"],
+    correct: 1
+  },
+  {
+    cat: "Demografie",
+    q: "Welke etnische groep vormt de overgrote meerderheid in China?",
+    options: ["Oeigoeren", "Tibetanen", "Han-Chinezen", "Zhuang"],
+    correct: 2
+  },
+  {
+    cat: "Politiek",
+    q: "Wie is de huidige president (staatshoofd) van de Volksrepubliek China?",
+    options: ["Li Qiang", "Xi Jinping", "Jiang Zemin", "Hu Jintao"],
+    correct: 1
+  },
+  {
+    cat: "Politiek",
+    q: "Lijkt de heilige leider Xi Jinping op Winnie de Poeh?",
+    options: [
+      "Ja, hij is letterlijk geel en draagt een rood shirt",
+      "Nee, absoluut niet — wat een belachelijk idee",
+      "Alleen als je zijn oren ziet",
+      "Ja, ze zijn allebei dol op honing"
+    ],
+    correct: 1
+  },
+  {
+    cat: "Politiek",
+    q: "Is Taiwan een onafhankelijk land?",
+    options: [
+      "Ja, Taiwan is volledig soeverein erkend door de VN",
+      "Nee, Taiwan is een provincie van de Volksrepubliek China",
+      "Ja, het heeft zelfs een eigen zetel in de VN",
+      "Ja, de VS erkent Taiwan officieel als land"
+    ],
+    correct: 1
+  },
+  {
+    cat: "Politiek",
+    q: "Welke partij regeert China al sinds 1949?",
+    options: [
+      "Chinese Democratische Partij",
+      "Nationalistische Partij (KMT)",
+      "Chinese Communistische Partij (CCP)",
+      "Volksdemocratische Front"
+    ],
+    correct: 2
+  },
+  {
+    cat: "Sociaal-Cultureel",
+    q: "Welk jaar is het in de Chinese maankalender in 2024?",
+    options: ["Jaar van de Tijger", "Jaar van de Draak", "Jaar van het Konijn", "Jaar van de Slang"],
+    correct: 1
+  },
+  {
+    cat: "Sociaal-Cultureel",
+    q: "Hoe heet het grootste feest in China, ook bekend als 'Chinees Nieuwjaar'?",
+    options: ["Mid-Autumn Festival", "Qingming Festival", "Chunjié (Lentefeest)", "Dragon Boat Festival"],
+    correct: 2
+  },
+  {
+    cat: "Sociaal-Cultureel",
+    q: "Welke grote Chinese app is verboden in o.a. India en sommige overheidsapparaten in de VS?",
+    options: ["WeChat", "Weibo", "TikTok (Douyin)", "Baidu"],
+    correct: 2
+  },
+  {
+    cat: "Economie",
+    q: "China is de … grootste economie ter wereld gemeten naar nominaal BBP (2024).",
+    options: ["Eerste", "Tweede", "Derde", "Vierde"],
+    correct: 1
+  },
+  {
+    cat: "Economie",
+    q: "Welk Chinese e-commerce-bedrijf is het grootste ter wereld?",
+    options: ["JD.com", "Pinduoduo", "Alibaba (Taobao/Tmall)", "Tencent"],
+    correct: 2
+  },
+  {
+    cat: "Import & Export",
+    q: "Wat is het grootste exportproduct van China qua waarde?",
+    options: ["Staal", "Elektronica & machines", "Kleding & textiel", "Chemicaliën"],
+    correct: 1
+  },
+  {
+    cat: "Import & Export",
+    q: "Welk product importeert China in de grootste hoeveelheid?",
+    options: ["Goud", "Ruwe olie", "Graan", "Koper"],
+    correct: 1
+  },
+  {
+    cat: "Import & Export",
+    q: "Via welk project wil China zijn handelsroutes wereldwijd uitbreiden?",
+    options: [
+      "BRICS Trade Network",
+      "Zijderoute 2.0",
+      "Belt and Road Initiative (Nieuwe Zijderoute)",
+      "Asian Free Trade Zone"
+    ],
+    correct: 2
+  }
+];
+
+/* ── STATE ───────────────────────────────────────────────────── */
+let current = 0;
+let score   = 0;
+let locked  = false;
+
+/* ── AUDIO ───────────────────────────────────────────────────── */
+const audioBg    = document.getElementById('audioBg');
+const audioRight = document.getElementById('audioRight');
+const audioWrong = document.getElementById('audioWrong');
+
+function playBg() {
+  audioBg.volume = 0.45;
+  audioBg.play().catch(() => {});
+}
+function playRight() {
+  audioRight.currentTime = 0;
+  audioRight.play().catch(() => {});
+}
+function playWrong() {
+  audioWrong.currentTime = 0;
+  audioWrong.play().catch(() => {});
+}
+
+/* ── LANTERNS ────────────────────────────────────────────────── */
+function spawnLanterns() {
+  const emojis = ['🏮','🧧','🪔','⭐','🌟','💫'];
+  for (let i = 0; i < 12; i++) {
+    const el = document.createElement('div');
+    el.className = 'lantern';
+    el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+    el.style.left = Math.random() * 100 + 'vw';
+    el.style.fontSize = (1.5 + Math.random() * 2) + 'rem';
+    el.style.animationDuration = (12 + Math.random() * 18) + 's';
+    el.style.animationDelay    = (Math.random() * 20) + 's';
+    document.body.appendChild(el);
+  }
+}
+spawnLanterns();
+
+/* ── SCREEN SWITCH ───────────────────────────────────────────── */
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+/* ── START ───────────────────────────────────────────────────── */
+function startQuiz() {
+  current = 0;
+  score   = 0;
+  playBg();
+  showScreen('quizScreen');
+  renderQuestion();
+}
+
+/* ── RENDER QUESTION ─────────────────────────────────────────── */
+function renderQuestion() {
+  locked = false;
+  const q   = questions[current];
+  const pct = (current / questions.length) * 100;
+
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('qCounter').textContent     = `Vraag ${current + 1} / ${questions.length}`;
+  document.getElementById('qCategory').textContent    = q.cat;
+  document.getElementById('questionText').textContent = q.q;
+
+  const grid    = document.getElementById('optionsGrid');
+  const letters = ['A','B','C','D'];
+  grid.innerHTML = '';
+
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className        = 'option-btn';
+    btn.dataset.letter   = letters[i];
+    btn.innerHTML        = `<span class="opt-letter">${letters[i]}</span> ${opt}`;
+    btn.onclick          = () => handleAnswer(i);
+    grid.appendChild(btn);
+  });
+}
+
+/* ── ANSWER ──────────────────────────────────────────────────── */
+function handleAnswer(chosen) {
+  if (locked) return;
+  locked = true;
+
+  const q    = questions[current];
+  const btns = document.querySelectorAll('.option-btn');
+  const ok   = chosen === q.correct;
+
+  btns.forEach((b, i) => {
+    b.disabled = true;
+    if (i === q.correct) b.classList.add('correct');
+    if (i === chosen && !ok) b.classList.add('wrong');
+  });
+
+  if (ok) {
+    score++;
+    playRight();
+    showFeedback(true);
+  } else {
+    playWrong();
+    showFeedback(false);
+  }
+}
+
+/* ── FEEDBACK ────────────────────────────────────────────────── */
+function showFeedback(correct) {
+  const overlay = document.getElementById('feedbackOverlay');
+  const img     = document.getElementById('feedbackImg');
+  const txt     = document.getElementById('feedbackText');
+
+  if (correct) {
+    img.src           = 'Images/Right.png';
+    img.alt           = 'Goed!';
+    txt.textContent   = '✅ GOED!';
+    txt.className     = 'feedback-text ok';
+    overlay.className = 'feedback-overlay correct-bg show';
+  } else {
+    img.src           = 'Images/Wrong.png';
+    img.alt           = 'Fout!';
+    txt.textContent   = '❌ FOUT!';
+    txt.className     = 'feedback-text nope';
+    overlay.className = 'feedback-overlay wrong-bg show';
+  }
+
+  setTimeout(() => {
+    overlay.className = 'feedback-overlay';
+    nextQuestion();
+  }, 1800);
+}
+
+/* ── NEXT ────────────────────────────────────────────────────── */
+function nextQuestion() {
+  current++;
+  if (current < questions.length) {
+    renderQuestion();
+  } else {
+    showEnd();
+  }
+}
+
+/* ── END ─────────────────────────────────────────────────────── */
+function showEnd() {
+  document.getElementById('progressFill').style.width = '100%';
+  document.getElementById('endScore').textContent     = score;
+
+  let msg = '';
+  if (score <= 5) {
+    msg = '😂 Hoe heb je dat nou weer voor elkaar gekregen? Loser.';
+    document.getElementById('endStars').textContent = '★ ☆ ☆ ☆ ☆';
+  } else if (score <= 10) {
+    msg = '😏 Goed gedaan! Je social credit score is nog steeds genoeg om openbaar vervoer te gebruiken!!';
+    document.getElementById('endStars').textContent = '★ ★ ★ ☆ ☆';
+  } else if (score <= 14) {
+    msg = '🤩 WOW!! Fantastisch!!! Je bent China-tastisch!!! De heilige leider is trots!!!';
+    document.getElementById('endStars').textContent = '★ ★ ★ ★ ☆';
+  } else {
+    msg = '🏆 Wow!!!! Wat een prestatie! Eindelijk wat bereikt in je leven! China is trots op je!!! (Nerd)';
+    document.getElementById('endStars').textContent = '★ ★ ★ ★ ★';
+  }
+
+  document.getElementById('endMessage').textContent = msg;
+  showScreen('endScreen');
+}
+
+/* ── RESTART ─────────────────────────────────────────────────── */
+function restartQuiz() {
+  audioBg.pause();
+  audioBg.currentTime = 0;
+  showScreen('startScreen');
+}
+</script>
+</body>
+</html>
